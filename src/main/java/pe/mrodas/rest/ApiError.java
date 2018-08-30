@@ -51,4 +51,36 @@ public class ApiError {
     public String getTrace() {
         return trace;
     }
+
+
+    public String getTrace(String packageFilter) {
+        if (trace == null) {
+            return null;
+        }
+        String[] split = trace.split("\n");
+        StringBuilder builder = new StringBuilder("\t\t");
+        if (packageFilter == null) {
+            builder.append(split[0].trim());
+            for (int i = 1; i < split.length; i++) {
+                builder.append("\n\t\t").append(split[i].trim());
+            }
+        } else {
+            String item = split[0].trim();
+            if (this.check(item, packageFilter)) {
+                builder.append(item);
+            }
+            for (int i = 1; i < split.length; i++) {
+                item = split[i].trim();
+                if (this.check(item, packageFilter)) {
+                    builder.append("\n\t\t").append(item);
+                }
+            }
+        }
+        return builder.toString();
+    }
+
+    private boolean check(String item, String filter) {
+        return !item.startsWith("at") || item.startsWith("at " + filter);
+    }
+
 }
