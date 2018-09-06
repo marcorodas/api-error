@@ -1,7 +1,5 @@
 package pe.mrodas.rest;
 
-import java.util.ArrayList;
-
 public class ApiError {
     private String message;
     private String type;
@@ -54,20 +52,35 @@ public class ApiError {
         return trace;
     }
 
-    @Override
-    public String toString() {
-        ArrayList<String> list = new ArrayList<String>();
-        if (type != null) {
-            list.add(String.format("\"type\":\"%s\"", type));
+
+    public String getTrace(String packageFilter) {
+        if (trace == null) {
+            return null;
         }
-        list.add(String.format("\"code\":%s, \"subcode\":%s", code, subCode));
-        if (message != null) {
-            list.add(String.format("\"message\":\"%s\"", message));
+        String[] split = trace.split("\n");
+        StringBuilder builder = new StringBuilder("\t\t");
+        if (packageFilter == null) {
+            builder.append(split[0].trim());
+            for (int i = 1; i < split.length; i++) {
+                builder.append("\n\t\t").append(split[i].trim());
+            }
+        } else {
+            String item = split[0].trim();
+            if (this.check(item, packageFilter)) {
+                builder.append(item);
+            }
+            for (int i = 1; i < split.length; i++) {
+                item = split[i].trim();
+                if (this.check(item, packageFilter)) {
+                    builder.append("\n\t\t").append(item);
+                }
+            }
         }
-        StringBuilder builder = new StringBuilder("\t").append(list.get(0));
-        for (int i = 1; i < list.size(); i++) {
-            builder.append(",\n\t").append(list.get(i));
-        }
-        return String.format("{\n%s\n}", builder.toString());
+        return builder.toString();
     }
+
+    private boolean check(String item, String filter) {
+        return !item.startsWith("at") || item.startsWith("at " + filter);
+    }
+
 }
