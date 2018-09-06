@@ -1,5 +1,7 @@
 package pe.mrodas.rest;
 
+import java.util.ArrayList;
+
 public class ApiError {
     private String message;
     private String type;
@@ -81,6 +83,23 @@ public class ApiError {
 
     private boolean check(String item, String filter) {
         return !item.startsWith("at") || item.startsWith("at " + filter);
+    }
+
+    @Override
+    public String toString() {
+        ArrayList<String> list = new ArrayList<String>();
+        if (type != null) {
+            list.add(String.format("\"type\":\"%s\"", type));
+        }
+        list.add(String.format("\"code\":%s, \"subcode\":%s", code, subCode));
+        if (message != null) {
+            list.add(String.format("\"message\":\"%s\"", message));
+        }
+        StringBuilder builder = new StringBuilder("\t").append(list.get(0));
+        for (int i = 1; i < list.size(); i++) {
+            builder.append(",\n\t").append(list.get(i));
+        }
+        return String.format("{\n%s\n}", builder.toString());
     }
 
 }
