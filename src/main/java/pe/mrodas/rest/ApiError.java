@@ -1,65 +1,67 @@
 package pe.mrodas.rest;
 
-import java.util.ArrayList;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class ApiError {
-    private String message;
-    private String type;
-    private int code;
-    private int subCode;
-    private String trace;
 
-    public ApiError setMessage(String message) {
-        this.message = message;
+    private int statusCode;
+    private String apiCode, userMessage, logMessage, stacktrace;
+
+    public ApiError(int statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    public ApiError setStatusCode(int statusCode) {
+        this.statusCode = statusCode;
         return this;
     }
 
-    public ApiError setType(String type) {
-        this.type = type;
+    public ApiError setStacktrace(String stacktrace) {
+        this.stacktrace = stacktrace;
         return this;
     }
 
-    public ApiError setCode(int code) {
-        this.code = code;
+    public ApiError setStacktrace(Exception e) {
+        if (e == null) {
+            stacktrace = null;
+        } else {
+            String[] traceLines = this.traceAsString(e)
+                    .split("\n");
+            stacktrace = this.addIndent(traceLines);
+        }
         return this;
     }
 
-    public ApiError setSubCode(int subCode) {
-        this.subCode = subCode;
-        return this;
+    private String addIndent(String[] traceLines) {
+        if (traceLines.length > 0) {
+            StringBuilder builder = new StringBuilder("\t").append(traceLines[0]);
+            for (int i = 1; i < traceLines.length; i++) {
+                builder.append("\n\t").append(traceLines[i]);
+            }
+            return builder.toString();
+        }
+        return null;
     }
 
-    public ApiError setTrace(String trace) {
-        this.trace = trace;
-        return this;
+    private String traceAsString(Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        String stackTrace = sw.toString();
+        pw.close();
+        return stackTrace;
     }
 
-    public String getMessage() {
-        return message;
+    public String getStacktrace() {
+        return stacktrace;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public int getCode() {
-        return code;
-    }
-
-    public int getSubCode() {
-        return subCode;
-    }
-
-    public String getTrace() {
-        return trace;
-    }
-
-
-    public String getTrace(String packageFilter) {
-        if (trace == null) {
+    public String getStacktrace(String packageFilter) {
+        if (stacktrace == null) {
             return null;
         }
-        String[] split = trace.split("\n");
+        String[] split = stacktrace.split("\n");
         StringBuilder builder = new StringBuilder("\t\t");
         if (packageFilter == null) {
             builder.append(split[0].trim());
@@ -85,21 +87,69 @@ public class ApiError {
         return !item.startsWith("at") || item.startsWith("at " + filter);
     }
 
-    @Override
-    public String toString() {
-        ArrayList<String> list = new ArrayList<String>();
-        if (type != null) {
-            list.add(String.format("\"type\":\"%s\"", type));
-        }
-        list.add(String.format("\"code\":%s, \"subcode\":%s", code, subCode));
-        if (message != null) {
-            list.add(String.format("\"message\":\"%s\"", message));
-        }
-        StringBuilder builder = new StringBuilder("\t").append(list.get(0));
-        for (int i = 1; i < list.size(); i++) {
-            builder.append(",\n\t").append(list.get(i));
-        }
-        return String.format("{\n%s\n}", builder.toString());
+    public int getStatusCode() {
+        return this.statusCode;
     }
 
+    public String getApiCode() {
+        return this.apiCode;
+    }
+
+    public String getUserMessage() {
+        return this.userMessage;
+    }
+
+    /**
+     * Gets the log message.
+     *
+     * @return The message to log.
+     */
+    public String getLogMessage() {
+        return this.logMessage;
+    }
+
+    public ApiError setApiCode(String apiCode) {
+        this.apiCode = apiCode;
+        return this;
+    }
+
+    public ApiError setUserMessage(String userMessage) {
+        this.userMessage = userMessage;
+        return this;
+    }
+
+    /**
+     * Sets the message to log
+     *
+     * @param logMessage the log message
+     * @return Same object
+     */
+    public ApiError setLogMessage(String logMessage) {
+        this.logMessage = logMessage;
+        return this;
+    }
+
+    public ApiError appendLogMessage(String logMessage) {
+        this.logMessage = this.logMessage == null ? logMessage
+                : this.logMessage.concat("\n").concat(logMessage);
+        return this;
+    }
+
+    public ApiError prependLogMessage(String logMessage) {
+        this.logMessage = this.logMessage == null ? logMessage
+                : logMessage.concat("\n").concat(this.logMessage);
+        return this;
+    }
+
+    public String toString() {
+        String format = "\tstatusCode=%s, apiCode=%s, \n\tuserMessage=%s";
+        String str = String.format(format, statusCode, apiCode, userMessage);
+        if (logMessage != null) {
+            str += ", logMessage=\n" + logMessage;
+        }
+        if (stacktrace != null) {
+            str += ", stacktrace=\n" + stacktrace;
+        }
+        return String.format("%s(\n%s\n)", this.getClass().getSimpleName(), str);
+    }
 }

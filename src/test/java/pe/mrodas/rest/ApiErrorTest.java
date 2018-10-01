@@ -1,10 +1,11 @@
 package pe.mrodas.rest;
 
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.util.Scanner;
+
+import org.junit.jupiter.api.Test;
 
 class ApiErrorTest {
 
@@ -16,8 +17,9 @@ class ApiErrorTest {
         String trace = scanner.useDelimiter("\\A").next();
         scanner.close();
         inputStream.close();
-        String filteredTrace = new ApiError().setTrace(trace)
-                .getTrace("pe.mrodas");
+        String filteredTrace = new ApiError(HttpURLConnection.HTTP_UNAUTHORIZED)
+                .setStacktrace(trace)
+                .getStacktrace("pe.mrodas");
         System.out.println(filteredTrace);
     }
 }
